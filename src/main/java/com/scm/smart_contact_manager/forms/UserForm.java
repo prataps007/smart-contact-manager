@@ -18,6 +18,7 @@ public class UserForm {
     private String name;
 
     @Email(message = "invalid email address")
+    @NotBlank(message = "Email is required")
     private String email;
 
     @NotBlank(message = "password is required")

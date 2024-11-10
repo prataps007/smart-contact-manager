@@ -1,12 +1,17 @@
 package com.scm.smart_contact_manager.services.Impl;
 
 import com.scm.smart_contact_manager.entities.User;
+import com.scm.smart_contact_manager.helper.AppConstants;
+import com.scm.smart_contact_manager.helper.Helper;
 import com.scm.smart_contact_manager.helper.ResourceNotFoundException;
 import com.scm.smart_contact_manager.repositories.UserRepo;
+import com.scm.smart_contact_manager.services.EmailService;
 import com.scm.smart_contact_manager.services.UserService;
+import jakarta.validation.constraints.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,14 +26,36 @@ public class UserServiceImpl implements UserService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private Helper helper;
+
+
     @Override
     public User saveUser(User user) {
         // generate user id
         String userId = UUID.randomUUID().toString();
         user.setUserId(userId);
         // encode password
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // set the user role
+
+        user.setRoleList(List.of((AppConstants.ROLE_USER)));
+
+        logger.info(user.getProvider().toString());
+
+        String emailToken = UUID.randomUUID().toString();
+        user.setEmailToken(emailToken);
 
         User saved = userRepo.save(user);
+        String emailLink = helper.getLinkForEmailVerification(emailToken);
+
+        emailService.sendEmail(saved.getEmail(), "Verify Account : Email Contact Manager", emailLink);
 
         return saved;
     }
@@ -50,7 +77,7 @@ public class UserServiceImpl implements UserService {
         user2.setEnabled(user.isEnabled());
         user2.setEmailVerified(user.isEmailVerified());
         user2.setPhoneVerified(user.isPhoneVerified());
-        user2.setProviders(user.getProviders());
+        user2.setProvider(user.getProvider());
         user2.setProviderUserId(user.getProviderUserId());
 
         User updated = userRepo.save(user2);
@@ -80,5 +107,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return List.of();
+    }
+
+    public User getUserByEmail(String email){
+        return userRepo.findByEmail(email).orElse(null);
     }
 }

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +30,14 @@ public class Contact {
     private boolean favorite=false;
     private String websiteLink;
     private String linkedInLink;
+    private String cloudinaryImagePublicId;
 
     //private List<SocialLink> socialLinks= new ArrayList<>()
 
     @ManyToOne
+    @JsonIgnore
     private User user;
 
-    @OneToMany(mappedBy = "contact", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "contact", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<SocialLink> links = new ArrayList<>();
 }
